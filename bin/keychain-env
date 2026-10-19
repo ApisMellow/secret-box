@@ -1,0 +1,134 @@
+#!/bin/bash
+# keychain-env: run a command with the keys its .env pointers name, read from
+# the macOS Keychain (or, under Git Bash on Windows, Credential Manager) and
+# set in its environment.
+#
+#   keychain-env [--env-file PATH]... -- COMMAND [ARG]...
+#
+# A pointer is a .env line NAME=keychain:SERVICE or
+# NAME=keychain:SERVICE?account=ACCOUNT, printable ASCII, with anything outside
+# A-Z a-z 0-9 . _ ~ : @ / + , ; = ! * - percent-encoded (%20 for a space).
+# Each is read with /usr/bin/security (on Windows, credman beside this file)
+# and exported as NAME; then COMMAND runs
+# in this process's place. Lines that aren't pointers are left to the app's own
+# .env loader, which (in most libraries) won't override what is already set.
+# With no --env-file, ./.env is read when it exists.
+#
+# It never prints a value. It stops before COMMAND runs when a pointer can't be
+# resolved, so the app never starts half set up.
+#
+# secret-box reads .env files and pointers by the same rules
+# (hooks/keychain.js), so it can load each value before this runs and hide it
+# wherever the app prints it.
+
+SECURITY=/usr/bin/security
+# Git Bash on Windows: Credential Manager, through bin/credman
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+CREDMAN=$here/credman
+windows=
+case $(uname -s 2>/dev/null) in MINGW* | MSYS* | CYGWIN*) windows=1 ;; esac
+
+die() {
+  printf 'keychain-env: %s\n' "$1" >&2
+  exit 2
+}
+
+usage='usage: keychain-env [--env-file PATH]... -- COMMAND [ARG]...'
+files=()
+has_command=
+while [ $# -gt 0 ]; do
+  case $1 in
+    --env-file) [ $# -ge 2 ] || die "--env-file needs a path. $usage"; files+=("$2"); shift 2 ;;
+    --env-file=*) files+=("${1#--env-file=}"); shift ;;
+    --) shift; has_command=1; break ;;
+    *) die "unexpected '$1'. $usage" ;;
+  esac
+done
+[ -n "$has_command" ] && [ $# -gt 0 ] || die "no command to run. $usage"
+if [ ${#files[@]} -eq 0 ]; then
+  [ -f .env ] && files=(.env)
+else
+  for f in "${files[@]}"; do [ -f "$f" ] || die "no such .env file: $f"; done
+fi
+
+ASSIGN='^[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*=[[:space:]]*(.*)$'
+DQ='^"([^"]*)"([[:space:]]+#.*)?$'
+SQ="^'([^']*)'([[:space:]]+#.*)?\$"
+SEG='([A-Za-z0-9._~:@/+,;=!*-]|%(2[0-9A-Fa-f]|[3-6][0-9A-Fa-f]|7[0-9A-Ea-e]))+'
+POINTER="^keychain:(${SEG})(\\?account=(${SEG}))?\$"
+# Bytes security -w prints as they are: printable ASCII. Any other makes it
+# print the whole value as hex, which can't be set as the value.
+PRINTABLE='^(2[0-9A-F]|[3-6][0-9A-F]|7[0-9A-E])$'
+
+# %XX back to its character (printable ASCII only, as the pattern allows)
+unescape() {
+  printf '%b' "${1//%/\\x}"
+}
+
+# Trailing blanks off
+trim() {
+  local s=$1
+  printf '%s' "${s%"${s##*[![:space:]]}"}"
+}
+
+# Read the files byte by byte, whatever the caller's locale: a blank is space,
+# tab, CR, VT or FF, and anything else (U+2028, a no-break space) is text, as
+# hooks/keychain.js reads them. The caller's locale is put back before COMMAND.
+had_lc_all=${LC_ALL+1}
+saved_lc_all=${LC_ALL-}
+LC_ALL=C
+
+for file in ${files[@]+"${files[@]}"}; do
+  while IFS= read -r line || [ -n "$line" ]; do
+    [[ $line =~ $ASSIGN ]] || continue
+    name=${BASH_REMATCH[2]}
+    raw=$(trim "${BASH_REMATCH[3]}")
+    if [[ $raw =~ $DQ ]] || [[ $raw =~ $SQ ]]; then
+      value=${BASH_REMATCH[1]}
+    else
+      value=$(trim "${raw%%[[:space:]]#*}")
+    fi
+    [[ $value == keychain:* ]] || continue
+    [[ $value =~ $POINTER ]] || die "$file: $name is not a valid keychain: pointer"
+    service=$(unescape "${BASH_REMATCH[1]}")
+    account=
+    [ -n "${BASH_REMATCH[5]}" ] && account=$(unescape "${BASH_REMATCH[5]}")
+    args=(-s "$service")
+    [ -n "$account" ] && args+=(-a "$account")
+    where="service '$service'${account:+, account '$account'}"
+
+    if [ -n "$windows" ]; then
+      # credman get prints printable ASCII as it is and refuses (3) anything else
+      value=$("$CREDMAN" get "${args[@]}" 2>/dev/null)
+      case $? in
+        0) ;;
+        44) die "$name: no Credential Manager item for $where. Add it in your own terminal window with: powershell -NoProfile -ExecutionPolicy Bypass -File \"$(cd "$here" && pwd -W)/credman.ps1\" add -Service '$service' -Account '${account:-$USERNAME}'" ;;
+        3) die "$name: the value in $where holds a newline, a tab or a non-ASCII character, so it is not set. Store it base64-encoded instead." ;;
+        *) die "$name: could not read $where from Credential Manager" ;;
+      esac
+      export "$name=$value"
+      unset value
+      continue
+    fi
+
+    # -g says on stderr how the value is printed: "text", or 0xHEX "copy"
+    shown=$("$SECURITY" find-generic-password "${args[@]}" -g 2>&1 >/dev/null) ||
+      die "$name: no readable Keychain item for $where. Add it with: security add-generic-password -U -s '$service' -a '${account:-$USER}' -w"
+    case $shown in
+      *'password: 0x'*)
+        hex=${shown#*password: 0x}
+        hex=${hex%%[[:space:]]*}
+        if printf '%s' "$hex" | fold -w2 | grep -Evq "$PRINTABLE"; then
+          die "$name: the value in $where holds a newline, a tab or a non-ASCII character, which security prints as hex, so it is not set. Store it base64-encoded instead."
+        fi
+        ;;
+    esac
+    unset shown hex
+    value=$("$SECURITY" find-generic-password "${args[@]}" -w) || die "$name: could not read $where"
+    export "$name=$value"
+    unset value
+  done < "$file"
+done
+
+if [ -n "$had_lc_all" ]; then LC_ALL=$saved_lc_all; else unset LC_ALL; fi
+exec "$@"

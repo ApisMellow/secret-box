@@ -1,0 +1,14 @@
+#!/bin/bash
+# credman: bin/credman.ps1 from Git Bash, so a command can read a Windows
+# Credential Manager item where its value goes, the way "$(security
+# find-generic-password -s NAME -w)" reads one on macOS:
+#
+#   curl -H "Authorization: Bearer $(/path/to/secret-box/bin/credman get -s NAME)" ...
+#
+# It takes credman.ps1's commands, and -s/-a for -Service/-Account. Windows
+# PowerShell is run by its full path, so nothing earlier on PATH is handed a
+# value, with no profile and the script's own execution policy.
+
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -W 2>/dev/null || pwd)
+root=${SYSTEMROOT:-${SystemRoot:-C:/Windows}}
+exec "${root//\\//}/System32/WindowsPowerShell/v1.0/powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$here/credman.ps1" "$@"

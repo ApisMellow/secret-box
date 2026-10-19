@@ -1,0 +1,24 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "secret-box",
+  "owner": {
+    "name": "David Whitlock",
+    "url": "https://github.com/ApisMellow"
+  },
+  "metadata": {
+    "description": "secret-box: Claude uses a secret without seeing it.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "secret-box",
+      "source": "./",
+      "description": "Claude can use a secret without seeing it: keys live in the macOS Keychain or Windows Credential Manager, Claude works with placeholders",
+      "version": "0.1.0",
+      "author": {
+        "name": "David Whitlock"
+      },
+      "license": "MIT"
+    }
+  ]
+}

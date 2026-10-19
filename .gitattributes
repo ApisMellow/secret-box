@@ -1,0 +1,5 @@
+# The scripts in bin/ run under bash (Git Bash on Windows), which reads a CR
+# as part of a word: keep them LF whatever core.autocrlf says
+bin/keychain-env text eol=lf
+bin/credman text eol=lf
+bin/credman.ps1 text eol=crlf
