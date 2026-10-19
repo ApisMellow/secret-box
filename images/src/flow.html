@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>secret-box flow</title>
+<!-- Rendered by render.sh at 1000x720 CSS px, device scale 2 -> images/flow.png (2000x1440).
+     SF Mono comes from Terminal.app's bundled fonts; elsewhere it falls back to Menlo. -->
+<style>
+  @font-face { font-family: "SB Mono"; font-weight: 400; src: url("file:///System/Applications/Utilities/Terminal.app/Contents/Resources/Fonts/SF-Mono-Regular.otf"); }
+  @font-face { font-family: "SB Mono"; font-weight: 500; src: url("file:///System/Applications/Utilities/Terminal.app/Contents/Resources/Fonts/SF-Mono-Medium.otf"); }
+  @font-face { font-family: "SB Mono"; font-weight: 600; src: url("file:///System/Applications/Utilities/Terminal.app/Contents/Resources/Fonts/SF-Mono-Semibold.otf"); }
+  @font-face { font-family: "SB Mono"; font-weight: 700; src: url("file:///System/Applications/Utilities/Terminal.app/Contents/Resources/Fonts/SF-Mono-Bold.otf"); }
+
+  :root {
+    --page: #0e1116; --win: #1f2125; --bar: #26282d; --block: #2b2d32; --edge: #33363c;
+    --rule: #3a3d44; --field: #4a4d55; --card: #171a1f;
+    --text: #d7dae0; --muted: #7d818a; --soft: #8b8f97; --tree: #6f727b;
+    --cyan: #5fd4e0; --yellow: #f0c75e; --orange: #f08a5d; --green: #5fd38a; --red: #ef6b6b;
+    --mono: "SB Mono", Menlo, "DejaVu Sans Mono", monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--page); }
+  body {
+    position: relative; width: 1000px; height: 720px; overflow: hidden;
+    font-family: var(--mono); font-size: 13.6px; line-height: 22.4px; color: var(--text);
+    -webkit-font-smoothing: antialiased; font-variant-ligatures: none;
+  }
+
+  /* terminal window */
+  .window { position: absolute; left: 38.5px; top: 40.5px; width: 923px; background: var(--win);
+    border: 1px solid var(--edge); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+  .bar { height: 36px; flex: none; background: var(--bar); position: relative; display: flex;
+    align-items: center; justify-content: center; color: var(--soft); font-size: 12.6px; }
+  .lights { position: absolute; left: 14px; top: 12px; display: flex; gap: 8px; }
+  .lights i { width: 12px; height: 12px; border-radius: 50%; }
+  .lights i:nth-child(1) { background: #ff5f57; } .lights i:nth-child(2) { background: #febc2e; } .lights i:nth-child(3) { background: #28c840; }
+  .panes { flex: 1; display: grid; }
+  .pane { padding: 18px 20.5px; min-width: 0; }
+  .pane + .pane { border-left: 1px solid var(--rule); }
+  .left { display: flex; flex-direction: column; }
+
+  .you { background: var(--block); padding: 5px 10px; margin-bottom: 10px; }
+  .you::before { content: "> "; color: var(--muted); }
+  .msg { position: relative; padding-left: 16px; margin-bottom: 12px; }
+  .msg::before { content: "●"; position: absolute; left: 0; top: 0; font-size: 10px; color: var(--text); }
+  .msg.ok::before { color: var(--green); }
+  .msg.err::before { color: var(--red); }
+  .tool { font-weight: 700; }
+  .out { position: relative; padding-left: 18px; margin-top: 2px; }
+  .out::before { content: "⎿"; position: absolute; left: 0; top: -1px; color: var(--tree); }
+  .wait { color: var(--orange); margin-bottom: 10px; }
+  .input { margin-top: auto; height: 36px; border: 1px solid var(--field); border-radius: 6px;
+    display: flex; align-items: center; padding: 0 10px; }
+  .input .cur { display: inline-block; width: 8.4px; height: 16px; background: var(--text); margin-left: 8px; }
+  .mode { margin-top: 6px; color: var(--muted); }
+  .mode b { color: var(--yellow); font-weight: 400; margin-right: 8px; letter-spacing: -1px; }
+
+  .c { color: var(--cyan); } .y { color: var(--yellow); } .m { color: var(--muted); } .s { color: var(--soft); }
+  .r { color: var(--red); } .g { color: var(--green); } .o { color: var(--orange); }
+
+  /* right pane, the box */
+  .right { font-size: 14px; line-height: 22.5px; }
+  .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 9px; }
+  .head h1 { font-size: 14px; font-weight: 700; color: var(--cyan); letter-spacing: 0.2px; }
+  .head h1::before { content: "◆ "; }
+  .head span { color: var(--muted); }
+  .ask { font-weight: 500; margin-bottom: 4px; }
+  .field { margin: 14px 0 12px; height: 37px; border: 1.5px solid var(--cyan); border-radius: 6px;
+    display: flex; align-items: center; padding: 0 11px; white-space: nowrap; }
+  .field .dots { letter-spacing: 0; }
+  .field .save { margin-left: auto; color: var(--muted); }
+  .note { margin-top: 32px; color: var(--muted); }
+
+  /* the strip of steps */
+  .steps { position: absolute; left: 38.5px; top: 493.5px; width: 923px; display: grid;
+    grid-template-columns: 1fr 30.5px 1fr 30.5px 1fr 30.5px 1fr; }
+  .step { background: var(--card); border: 1px solid var(--edge); border-radius: 10px; height: 158.5px; padding: 14px 15px 0; }
+  .arrow { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 14px; }
+  .step h2 { font-size: 12px; font-weight: 400; color: var(--orange); letter-spacing: 1.1px; line-height: 20px; }
+  .step h3 { font-size: 14.6px; font-weight: 400; color: var(--text); margin: 6px 0 5px; line-height: 24px; white-space: nowrap; }
+  .step p { font-size: 12px; line-height: 18.9px; color: var(--soft); }
+  .foot { position: absolute; left: 0; right: 0; top: 667px; text-align: center; color: var(--soft); font-size: 12.8px; }
+</style>
+</head>
+<body>
+  <div class="window" style="height: 426px;">
+    <div class="bar"><div class="lights"><i></i><i></i><i></i></div>claude · ~/code/shop</div>
+    <div class="panes" style="grid-template-columns: 455px 1fr;">
+      <div class="pane left">
+        <div class="you">billing.js needs the Stripe secret key. Get it set up for me.</div>
+        <div class="msg">billing.js reads <span class="c">process.env.STRIPE_SECRET_KEY</span>. I'll ask you for it in the secret box, so it never lands in this chat.</div>
+        <div class="msg ok"><span class="tool">secret-box - request_secret</span> <span class="m">(MCP)</span>(name: <span class="y">"shop/STRIPE_SECRET_KEY"</span>, reason: "billing.js creates the Stripe client with it")</div>
+        <div class="wait">✱ Waiting for you…</div>
+        <div class="input"><span>&gt;</span><span class="cur"></span></div>
+        <div class="mode"><b>▸▸</b>auto mode on</div>
+      </div>
+      <div class="pane right">
+        <div class="head"><h1>SECRET BOX</h1><span>Keychain</span></div>
+        <div class="ask">Claude is asking for <span class="y">shop/STRIPE_SECRET_KEY</span></div>
+        <div class="m">billing.js creates the Stripe client with it</div>
+        <div class="field"><span>value&nbsp;</span><span class="dots">••••••••••••••••••••••••••••••••</span><span class="save">⏎ save</span></div>
+        <div class="m">32 characters · Enter saves · Esc cancels ·<br>Claude never sees the value</div>
+        <div class="note">Claude gets the name and a placeholder it can use. The key goes into the macOS Keychain.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <h2>1 · ASK</h2>
+      <h3>Claude calls a tool</h3>
+      <p><span class="c">request_secret</span> with a name and a reason, instead of "paste it here"</p>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <h2>2 · MASKED BOX</h2>
+      <h3>You paste it</h3>
+      <p>A pane opens with the field focused. It only ever draws dots.</p>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <h2>3 · MOD SAVES</h2>
+      <h3>Into the Keychain</h3>
+      <p>A Keychain item, or Credential Manager on Windows. <span class="c">.env</span> is not touched.</p>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <h2>4 · PLACEHOLDER</h2>
+      <h3>Use, never see</h3>
+      <p>Claude gets <span class="c">[REDACTED-SECRET-…]</span>. It turns into the key when a command runs.</p>
+    </div>
+  </div>
+
+  <div class="foot">Any key a tool prints comes back as a placeholder. Committing a <span class="c">.env</span> that holds a key is refused.</div>
+</body>
+</html>

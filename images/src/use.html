@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>secret-box use</title>
+<!-- Rendered by render.sh at 1000x562.5 CSS px, device scale 2 -> images/use.png (2000x1125).
+     SF Mono comes from Terminal.app's bundled fonts; elsewhere it falls back to Menlo. -->
+<style>
+  @font-face { font-family: "SB Mono"; font-weight: 400; src: url("file:///System/Applications/Utilities/Terminal.app/Contents/Resources/Fonts/SF-Mono-Regular.otf"); }
+  @font-face { font-family: "SB Mono"; font-weight: 500; src: url("file:///System/Applications/Utilities/Terminal.app/Contents/Resources/Fonts/SF-Mono-Medium.otf"); }
+  @font-face { font-family: "SB Mono"; font-weight: 600; src: url("file:///System/Applications/Utilities/Terminal.app/Contents/Resources/Fonts/SF-Mono-Semibold.otf"); }
+  @font-face { font-family: "SB Mono"; font-weight: 700; src: url("file:///System/Applications/Utilities/Terminal.app/Contents/Resources/Fonts/SF-Mono-Bold.otf"); }
+
+  :root {
+    --page: #0e1116; --win: #1f2125; --bar: #26282d; --block: #2b2d32; --edge: #33363c;
+    --rule: #3a3d44; --field: #4a4d55; --card: #171a1f;
+    --text: #d7dae0; --muted: #7d818a; --soft: #8b8f97; --tree: #6f727b;
+    --cyan: #5fd4e0; --yellow: #f0c75e; --orange: #f08a5d; --green: #5fd38a; --red: #ef6b6b;
+    --mono: "SB Mono", Menlo, "DejaVu Sans Mono", monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--page); }
+  body {
+    position: relative; width: 1000px; height: 562.5px; overflow: hidden;
+    font-family: var(--mono); font-size: 13.6px; line-height: 22.4px; color: var(--text);
+    -webkit-font-smoothing: antialiased; font-variant-ligatures: none;
+  }
+
+  .window { position: absolute; left: 38.5px; top: 40.5px; width: 923px; background: var(--win);
+    border: 1px solid var(--edge); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+  .bar { height: 36px; flex: none; background: var(--bar); position: relative; display: flex;
+    align-items: center; justify-content: center; color: var(--soft); font-size: 12.6px; }
+  .lights { position: absolute; left: 14px; top: 12px; display: flex; gap: 8px; }
+  .lights i { width: 12px; height: 12px; border-radius: 50%; }
+  .lights i:nth-child(1) { background: #ff5f57; } .lights i:nth-child(2) { background: #febc2e; } .lights i:nth-child(3) { background: #28c840; }
+  .panes { flex: 1; display: grid; }
+  .pane { padding: 18px 20.5px; min-width: 0; }
+  .pane + .pane { border-left: 1px solid var(--rule); }
+  .left { display: flex; flex-direction: column; }
+
+  .you { background: var(--block); padding: 5px 10px; margin-bottom: 12px; }
+  .you::before { content: "> "; color: var(--muted); }
+  .msg { position: relative; padding-left: 16px; margin-bottom: 12px; }
+  .msg::before { content: "●"; position: absolute; left: 0; top: 0; font-size: 10px; color: var(--text); }
+  .msg.ok::before { color: var(--green); }
+  .tool { font-weight: 700; }
+  .out { position: relative; padding-left: 18px; margin-top: 2px; }
+  .out::before { content: "⎿"; position: absolute; left: 0; top: -1px; color: var(--tree); }
+  .input { margin-top: auto; height: 36px; border: 1px solid var(--field); border-radius: 6px;
+    display: flex; align-items: center; padding: 0 10px; }
+  .input .cur { display: inline-block; width: 8.4px; height: 16px; background: var(--text); margin-left: 8px; }
+  .mode { margin-top: 6px; color: var(--muted); }
+  .mode b { color: var(--yellow); font-weight: 400; margin-right: 8px; letter-spacing: -1px; }
+
+  .c { color: var(--cyan); white-space: nowrap; } .y { color: var(--yellow); } .m { color: var(--muted); } .s { color: var(--soft); }
+
+  .right { font-size: 14px; line-height: 22.5px; }
+  .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  .head h1 { font-size: 14px; font-weight: 700; color: var(--cyan); letter-spacing: 0.2px; }
+  .head h1::before { content: "◆ "; }
+  .head span { color: var(--muted); }
+  .step { margin-bottom: 12px; }
+  .step .label { display: block; color: var(--muted); }
+  .why { color: var(--muted); margin-top: 20px; }
+  .next { color: var(--muted); margin-top: 14px; }
+</style>
+</head>
+<body>
+  <div class="window" style="height: 481.5px;">
+    <div class="bar"><div class="lights"><i></i><i></i><i></i></div>claude · ~/code/shop</div>
+    <div class="panes" style="grid-template-columns: 500px 1fr;">
+      <div class="pane left">
+        <div class="msg ok"><span class="tool">secret-box - request_secret</span> <span class="m">(MCP)</span>(name: <span class="y">"shop/STRIPE_SECRET_KEY"</span>, reason: "billing.js creates the Stripe client with it")
+          <div class="out">The user entered shop/STRIPE_SECRET_KEY, saved to the macOS Keychain (account sam) as <span class="c">[REDACTED-SECRET-3f9a1c2e]</span>.</div>
+        </div>
+        <div class="you">prove it's in there without showing it to either of us</div>
+        <div class="msg ok"><span class="tool">Bash</span>(k='<span class="c">[REDACTED-SECRET-3f9a1c2e]</span>'; echo "length: ${#k}"; echo "first 8: ${k:0:8}")
+          <div class="out">length: 32<br>first 8: sk_test_</div>
+        </div>
+        <div class="input"><span>&gt;</span><span class="cur"></span></div>
+        <div class="mode"><b>▸▸</b>auto mode on</div>
+      </div>
+      <div class="pane right">
+        <div class="head"><h1>ONE TOOL CALL</h1><span>tool.call</span></div>
+        <div class="step"><span class="label">Claude writes</span>k='<span class="c">[REDACTED-SECRET-3f9a1c2e]</span>'</div>
+        <div class="step"><span class="label">the shell runs</span>k='<span class="y">sk_test_51…</span>' <span class="m">(the real key)</span></div>
+        <div class="step"><span class="label">Claude reads back</span>length: 32, first 8: sk_test_</div>
+        <div class="why">The placeholder is 26 characters. 32 is the key's own length, so the real value ran. Had the key itself been printed, it would come back as the placeholder.</div>
+        <div class="next">Next session, <span class="c">use_secret</span> loads the same Keychain item under a new placeholder.</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

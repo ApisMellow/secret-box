@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>secret-box where the key lives</title>
+<!-- Rendered by render.sh at 1000x562.5 CSS px, device scale 2 -> images/where-the-key-lives.png (2000x1125).
+     SF Mono comes from Terminal.app's bundled fonts; elsewhere it falls back to Menlo. -->
+<style>
+  @font-face { font-family: "SB Mono"; font-weight: 400; src: url("file:///System/Applications/Utilities/Terminal.app/Contents/Resources/Fonts/SF-Mono-Regular.otf"); }
+  @font-face { font-family: "SB Mono"; font-weight: 500; src: url("file:///System/Applications/Utilities/Terminal.app/Contents/Resources/Fonts/SF-Mono-Medium.otf"); }
+  @font-face { font-family: "SB Mono"; font-weight: 600; src: url("file:///System/Applications/Utilities/Terminal.app/Contents/Resources/Fonts/SF-Mono-Semibold.otf"); }
+  @font-face { font-family: "SB Mono"; font-weight: 700; src: url("file:///System/Applications/Utilities/Terminal.app/Contents/Resources/Fonts/SF-Mono-Bold.otf"); }
+
+  :root {
+    --page: #0e1116; --win: #1f2125; --bar: #26282d; --block: #2b2d32; --edge: #33363c;
+    --rule: #3a3d44; --field: #4a4d55; --card: #171a1f;
+    --text: #d7dae0; --muted: #7d818a; --soft: #8b8f97; --tree: #6f727b;
+    --cyan: #5fd4e0; --yellow: #f0c75e; --orange: #f08a5d; --green: #5fd38a; --red: #ef6b6b;
+    --tint: rgba(95, 212, 224, 0.055);
+    --mono: "SB Mono", Menlo, "DejaVu Sans Mono", monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--page); }
+  body {
+    position: relative; width: 1000px; height: 562.5px; overflow: hidden;
+    font-family: var(--mono); font-size: 13.6px; line-height: 22.4px; color: var(--text);
+    -webkit-font-smoothing: antialiased; font-variant-ligatures: none;
+  }
+  .c { color: var(--cyan); } .y { color: var(--yellow); } .m { color: var(--muted); }
+
+  .head { position: absolute; left: 38.5px; width: 923px; top: 40px; display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; }
+  .head h1 { font-size: 14px; font-weight: 700; color: var(--cyan); letter-spacing: 0.2px; }
+  .head h1::before { content: "◆ "; }
+  .head span { color: var(--muted); }
+
+  .table { position: absolute; left: 38.5px; top: 76px; width: 923px; background: var(--win);
+    border: 1px solid var(--edge); border-radius: 12px; overflow: hidden;
+    display: grid; grid-template-columns: 330px 1fr 1fr; }
+  .table > div { padding: 0 16px; display: flex; align-items: center; min-height: 51px; border-top: 1px solid var(--block); white-space: nowrap; }
+  .table > .row { font-size: 13px; }
+  .table > .th { border-top: 0; min-height: 76px; flex-direction: column; align-items: flex-start; justify-content: center; background: var(--bar); }
+  .table > .th b { font-size: 15px; font-weight: 600; color: var(--text); line-height: 24px; }
+  .table > .th small { font-size: 12.5px; color: var(--muted); line-height: 20px; }
+  .table > .th.ours b { color: var(--cyan); }
+  .table > .ours { background: var(--tint); border-left: 1px solid rgba(95, 212, 224, 0.35); }
+  .table > .th.ours { background: #24343a; }
+  .table > .row { color: var(--text); }
+  .cell { font-size: 13px; white-space: nowrap; }
+  .cell::before { display: inline-block; width: 20px; }
+  .no { color: var(--muted); }
+  .no::before { content: "✗"; color: var(--red); }
+  .yes::before { content: "✓"; color: var(--green); }
+
+  .foot { position: absolute; left: 38.5px; width: 923px; top: 480px; color: var(--soft); font-size: 12.8px; line-height: 21px; }
+</style>
+</head>
+<body>
+  <div class="head"><h1>WHERE THE KEY LIVES</h1><span>when Claude sets up a Stripe key</span></div>
+
+  <div class="table">
+    <div class="th"></div>
+    <div class="th"><b>Plain Claude Code</b><small>key in .env and in the chat</small></div>
+    <div class="th ours"><b>With secret-box</b><small>key in the Keychain, encrypted</small></div>
+
+    <div class="row"><span>Claude never sees the key</span></div>
+    <div class="cell no"><span>you paste it into the chat</span></div>
+    <div class="cell yes ours"><span>you type it into a masked box</span></div>
+
+    <div class="row"><span>Key stays out of the transcript</span></div>
+    <div class="cell no"><span>stored in ~/.claude/projects</span></div>
+    <div class="cell yes ours"><span>it holds only a placeholder</span></div>
+
+    <div class="row"><span>Keys in tool output come back hidden</span></div>
+    <div class="cell no"><span>cat .env shows it to Claude</span></div>
+    <div class="cell yes ours"><span>as <span class="c">[REDACTED-SECRET-…]</span></span></div>
+
+    <div class="row"><span>A .env with a key can't be committed</span></div>
+    <div class="cell no"><span>nothing checks</span></div>
+    <div class="cell yes ours"><span>refused before git runs</span></div>
+
+    <div class="row"><span>No plain-text key in .env</span></div>
+    <div class="cell no"><span>STRIPE_SECRET_KEY=<span class="y">sk_test_51…</span></span></div>
+    <div class="cell yes ours"><span>a <span class="c">keychain:</span> pointer at most</span></div>
+
+    <div class="row"><span>Key encrypted at rest</span></div>
+    <div class="cell no"><span>plain text on disk</span></div>
+    <div class="cell yes ours"><span>Keychain / Credential Manager</span></div>
+  </div>
+
+  <div class="foot">macOS keeps the key in the Keychain, Windows in Credential Manager. On other systems secret-box saves it to <span class="c">.env</span>, still out of the chat and out of git.</div>
+</body>
+</html>
